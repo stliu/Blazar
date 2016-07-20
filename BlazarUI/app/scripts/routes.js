@@ -19,15 +19,24 @@ function redirectRepoBuildShortlink(nextState, replace, callback) {
     url: `${config.apiRoot}/branches/builds/${nextState.params.repoBuildId}`,
     type: 'GET',
     dataType: 'json'
-  });
-
-  data.then((resp) => {
-    replace(`/builds/branch/${resp.branchId}/build/${resp.buildNumber}`);
-    callback();
+  }).then((resp) => {
+    const {branchId, buildNumber} = resp;
+    replace(`/builds/branch/${branchId}/build/${buildNumber}`);
   }, (error) => {
     replace('/not-found');
-    callback();
-  });
+  }).always(callback);
+}
+
+function redirectCoordinates(nextState, replace, callback) {
+  const {coordinates, buildNumber} = nextState.params;
+  const data = $.ajax({
+    url: `${config.apiRoot}/builds/coords/${coordinates}/build/${buildNumber}`
+  }).then((resp) => {
+    const {branchId, moduleName} = resp;
+    replace(`/builds/branch/${branchId}/build/${buildNumber}/module/${moduleName}`);
+  }, (error) => {
+    replace('/not-found');
+  }).always(callback);
 }
 
 const routes = (
@@ -40,6 +49,7 @@ const routes = (
     <Route name='repoBuild' path='/builds/branch/:branchId/build/:buildNumber' component={ RepoBuild } />
     <Route name='build' path='/builds/branch/:branchId/build/:buildNumber/module/:moduleName' component={ Build } />
     <Route name='repoBuildShortlink' path='/builds/repo-build/:repoBuildId' onEnter={redirectRepoBuildShortlink} />
+    <Route name='coordinates' path='/builds/coords/:coords/build/:buildNumber' onEnter={redirectCoordinates} />
     <Route name='notFound' path="*" component={ NotFound } />
   </Route>
 );

@@ -12,6 +12,38 @@ import com.hubspot.blazar.base.RepositoryState;
 
 public interface StateDao {
 
+  public static String QUERY = "" +
+      "SELECT * " +
+      "  FROM modules AS module " +
+      // last build
+      "     LEFT OUTER JOIN module_builds AS lastModuleBuild ON (module.lastBuildId = lastModuleBuild.id) " +
+      "     LEFT OUTER JOIN repo_builds AS lastRepoBuild ON (lastModuleBuild.repoBuildId = lastRepoBuild.id) " +
+      // in progress build
+      "     LEFT OUTER JOIN module_builds AS inProgressModuleBuild ON (module.inProgressBuildId = inProgressModuleBuild.id) " +
+      "     LEFT OUTER JOIN repo_builds AS inProgressRepoBuild ON (inProgressModuleBuild.repoBuildId = inProgressRepoBuild.id) " +
+      // pending build
+      "     LEFT OUTER JOIN module_builds AS pendingModuleBuild ON (module.pendingBuildId =pendingModuleBuild.id) " +
+      "     LEFT OUTER JOIN repo_builds AS pendingRepoBuild ON (pendingModuleBuild.repoBuildId = pendingRepoBuild.id) " +
+      // last non skipped
+      "     LEFT OUTER JOIN module_builds AS lastNonSkippedModuleBuild ON (module.id = lastNonSkippedModuleBuild.moduleId) " +
+      "     LEFT OUTER JOIN repo_builds AS lastNonSkippedRepoBuild ON (lastNonSkippedModuleBuild.repoBuildId = lastNonSkippedRepoBuild.id) " +
+      // last successful
+      "     LEFT OUTER JOIN module_builds AS lastSuccessfulModuleBuild ON (module.id = lastSuccessfulModuleBuild.moduleId) " +
+      "     LEFT OUTER JOIN repo_builds AS lastSuccessfulRepoBuild ON (lastSuccessfulModuleBuild.repoBuildId = lastSuccessfulRepoBuild.id) " +
+      "  WHERE module.id = 1 " +
+      // lastNonSkipped and lastSuccessful ids are gotten in subqueries to avoid sorting for the lastNonSkipped and then also lastSuccessful
+      "  AND lastNonSkippedModuleBuild.id = (SELECT lastNonSkippedBuild.id FROM module_builds AS lastNonSkippedBuild " +
+      "                                      LEFT OUTER JOIN repo_builds AS repositoryBuild ON (lastNonSkippedBuild.repoBuildId = repositoryBuild.id) " +
+      "                                      WHERE lastNonSkippedBuild.moduleId = 1 " +
+      "                                      AND lastNonSkippedBuild.state IN ('SUCCEEDED', 'CANCELLED', 'FAILED') " +
+      "                                      ORDER BY lastNonSkippedBuild.id DESC LIMIT 1) " +
+      "  AND lastSuccessfulModuleBuild.id = (SELECT lastSuccessfulBuild.id " +
+      "                                      FROM module_builds AS lastSuccessfulBuild " +
+      "                                      LEFT OUTER JOIN repo_builds AS repositoryBuild ON (lastSuccessfulBuild.repoBuildId = repositoryBuild.id) " +
+      "                                      WHERE lastSuccessfulBuild.moduleId = 1" +
+      "                                      AND lastSuccessfulBuild.state = 'SUCCEEDED' " +
+      "                                      ORDER BY lastSuccessfulBuild.id DESC LIMIT 1)";
+
   @SqlQuery("" +
       "SELECT gitInfo.*, lastBuild.*, inProgressBuild.*, pendingBuild.* " +
       "FROM branches AS gitInfo " +

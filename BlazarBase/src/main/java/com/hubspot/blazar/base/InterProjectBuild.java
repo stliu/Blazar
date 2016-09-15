@@ -6,6 +6,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.hubspot.rosetta.annotations.StoredAsJson;
 
 public class InterProjectBuild {
@@ -48,6 +49,7 @@ public class InterProjectBuild {
                            @JsonProperty("dependencyGraph") Optional<DependencyGraph> dependencyGraph) {
     this.id = id;
     this.state = state;
+    moduleIds.stream().forEach(Preconditions::checkNotNull);
     this.moduleIds = moduleIds;
     this.buildTrigger = buildTrigger;
     this.startTimestamp = startTimestamp;
@@ -56,7 +58,7 @@ public class InterProjectBuild {
   }
 
   public static InterProjectBuild getQueuedBuild(Set<Integer> moduleIds, BuildTrigger buildTrigger) {
-    return new InterProjectBuild(Optional.<Long>absent(), State.QUEUED, moduleIds, buildTrigger, Optional.of(System.currentTimeMillis()), Optional.<Long>absent(),Optional.<DependencyGraph>absent());
+    return new InterProjectBuild(Optional.absent(), State.QUEUED, moduleIds, buildTrigger, Optional.of(System.currentTimeMillis()), Optional.absent(),Optional.absent());
   }
 
   public static InterProjectBuild getStarted(InterProjectBuild build) {

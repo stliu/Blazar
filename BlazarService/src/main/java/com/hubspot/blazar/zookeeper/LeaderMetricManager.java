@@ -1,5 +1,6 @@
 package com.hubspot.blazar.zookeeper;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -91,9 +92,24 @@ public class LeaderMetricManager implements LeaderLatchListener {
   private Gauge<Number> makeZkQueueGauge(final String path){
     return () -> {
       try {
-        return curatorFramework.getChildren().forPath(path).size();
+        throw new IOException("asdf");
+        //return curatorFramework.getChildren().forPath(path).size();
       } catch (Exception e) {
-        return 0;
+        // Throwing a RTE here will cause metrics on the metrics endpoint to
+        // render the error in an "error" field as show below:
+        /*
+            {
+              "gauges": {
+                "com.hubspot.blazar.zookeeper.LeaderMetricManager.queues.ModuleBuild.size": {
+                  error: "java.lang.RuntimeException: java.io.IOException: asdf"
+                },
+                "io.dropwizard.db.ManagedPooledDataSource.db.active": {
+                  value: 0
+                }
+              }
+            }
+        */
+        throw new RuntimeException(e);
       }
     };
   }

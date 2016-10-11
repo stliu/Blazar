@@ -7,7 +7,7 @@ import java.util.Set;
 import com.google.inject.Inject;
 import com.hubspot.blazar.base.ModuleBuild;
 import com.hubspot.blazar.base.RepositoryBuild;
-import com.hubspot.blazar.base.metrics.StateToActiveBuildCountPair;
+import com.hubspot.blazar.base.metrics.ActiveBuildCountPair;
 import com.hubspot.blazar.data.dao.MetricsDao;
 
 public class MetricsService {
@@ -20,19 +20,19 @@ public class MetricsService {
   }
 
   public Map<ModuleBuild.State, Integer> countActiveModuleBuildsByState() {
-    Set<StateToActiveBuildCountPair> pairs = dao.countActiveModuleBuildsByState();
+    Set<ActiveBuildCountPair<ModuleBuild.State>> pairs = dao.countActiveModuleBuildsByState();
     Map<ModuleBuild.State, Integer> stateCountMap = new HashMap<>();
-    for (StateToActiveBuildCountPair pair : pairs) {
-      stateCountMap.put(ModuleBuild.State.valueOf(pair.getStateName()), pair.getCount());
+    for (ActiveBuildCountPair<ModuleBuild.State> pair : pairs) {
+      stateCountMap.put(pair.getState(), pair.getCount());
     }
     return stateCountMap;
   }
 
   public Map<RepositoryBuild.State, Integer> countActiveBranchBuildsByState() {
-    Set<StateToActiveBuildCountPair> pairs = dao.countActiveBranchBuildsByState();
+    Set<ActiveBuildCountPair<RepositoryBuild.State>> pairs = dao.countActiveBranchBuildsByState();
     Map<RepositoryBuild.State, Integer> stateCountMap = new HashMap<>();
-    for (StateToActiveBuildCountPair pair : pairs) {
-      stateCountMap.put(RepositoryBuild.State.valueOf(pair.getStateName()), pair.getCount());
+    for (ActiveBuildCountPair<RepositoryBuild.State> pair : pairs) {
+      stateCountMap.put(pair.getState(), pair.getCount());
     }
     return stateCountMap;
   }

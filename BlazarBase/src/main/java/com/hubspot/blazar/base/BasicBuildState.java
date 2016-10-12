@@ -5,4 +5,5 @@ public interface BasicBuildState {
   boolean isWaiting();
   boolean isRunning();
   boolean isComplete();
+  String name();
 }

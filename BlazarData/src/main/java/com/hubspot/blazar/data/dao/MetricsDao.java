@@ -20,7 +20,7 @@ public interface MetricsDao {
   Set<StateToActiveBuildCountPair<RepositoryBuild.State>> countActiveBranchBuildsByState();
 
   @SqlQuery("SELECT state, count(id) AS count FROM inter_project_builds " +
-      "WHERE state in ('QUEUED', 'LAUNCHING', 'IN_PROGRESS') GROUP BY state")
+      "WHERE state in ('QUEUED', 'IN_PROGRESS') GROUP BY state")
   Set<StateToActiveBuildCountPair<InterProjectBuild.State>> countActiveInterProjectBuildsByState();
 
 }

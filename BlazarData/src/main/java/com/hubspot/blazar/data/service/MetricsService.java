@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.inject.Inject;
+import com.hubspot.blazar.base.InterProjectBuild;
 import com.hubspot.blazar.base.ModuleBuild;
 import com.hubspot.blazar.base.RepositoryBuild;
 import com.hubspot.blazar.base.metrics.StateToActiveBuildCountPair;
@@ -32,6 +33,15 @@ public class MetricsService {
     Set<StateToActiveBuildCountPair<RepositoryBuild.State>> pairs = dao.countActiveBranchBuildsByState();
     Map<RepositoryBuild.State, Integer> stateCountMap = new HashMap<>();
     for (StateToActiveBuildCountPair<RepositoryBuild.State> pair : pairs) {
+      stateCountMap.put(pair.getState(), pair.getCount());
+    }
+    return stateCountMap;
+  }
+
+  public Map<InterProjectBuild.State, Integer> countActiveInterProjectBuildsByState() {
+    Set<StateToActiveBuildCountPair<InterProjectBuild.State>> pairs = dao.countActiveInterProjectBuildsByState();
+    Map<InterProjectBuild.State, Integer> stateCountMap = new HashMap<>();
+    for (StateToActiveBuildCountPair<InterProjectBuild.State> pair : pairs) {
       stateCountMap.put(pair.getState(), pair.getCount());
     }
     return stateCountMap;

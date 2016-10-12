@@ -178,7 +178,7 @@ public class InterProjectModuleBuildVisitor extends AbstractModuleBuildVisitor {
         }
       }
       // state not present implies no build has been started for this yet.
-      if ((state.isPresent() && !state.get().isFinished()) || !state.isPresent()) {
+      if ((state.isPresent() && !state.get().isComplete()) || !state.isPresent()) {
         return false;
       }
     }

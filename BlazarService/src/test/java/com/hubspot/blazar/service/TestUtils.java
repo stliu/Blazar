@@ -59,7 +59,7 @@ public class TestUtils {
 
   public InterProjectBuild waitForInterProjectBuild(InterProjectBuild build) throws InterruptedException {
     int count = 0;
-    while (!build.getState().isFinished()) {
+    while (!build.getState().isComplete()) {
       if (count > 10) {
         fail(String.format("Build %s took more than 10s to complete", build));
       }

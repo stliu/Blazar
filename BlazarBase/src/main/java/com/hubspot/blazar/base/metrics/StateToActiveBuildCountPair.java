@@ -4,15 +4,15 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hubspot.blazar.base.BasicBuildState;
 
-public class ActiveBuildCountPair<T> {
+public class StateToActiveBuildCountPair<T extends Enum<T> & BasicBuildState> {
 
-  final T state;
-  final int count;
+  private final T state;
+  private final int count;
 
   @JsonCreator
-  public ActiveBuildCountPair(@JsonProperty("state") T state,
-                              @JsonProperty("count") int count) {
+  public StateToActiveBuildCountPair(@JsonProperty("state") T state, @JsonProperty("count") int count) {
     this.state = state;
     this.count = count;
   }
@@ -35,7 +35,7 @@ public class ActiveBuildCountPair<T> {
       return false;
     }
 
-    ActiveBuildCountPair<T> pair = (ActiveBuildCountPair<T>) o;
+    StateToActiveBuildCountPair<T> pair = (StateToActiveBuildCountPair<T>) o;
     return state.equals(pair.state) && count == pair.count;
   }
 

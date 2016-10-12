@@ -1,17 +1,16 @@
 package com.hubspot.blazar.base;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.hubspot.rosetta.annotations.StoredAsJson;
 
-import java.util.Objects;
-
 public class ModuleBuild {
-  public enum SimpleState { WAITING, RUNNING, COMPLETE }
 
-  public enum State {
+  public enum State implements BasicBuildState {
     QUEUED(SimpleState.WAITING),
     WAITING_FOR_UPSTREAM_BUILD(SimpleState.WAITING),
     LAUNCHING(SimpleState.RUNNING),

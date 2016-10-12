@@ -1,6 +1,5 @@
 package com.hubspot.blazar.base;
 
-
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,17 +8,34 @@ import com.google.common.base.Optional;
 import com.hubspot.rosetta.annotations.StoredAsJson;
 
 public class RepositoryBuild {
-  public enum State {
-    QUEUED(false), LAUNCHING(false), IN_PROGRESS(false), SUCCEEDED(true), CANCELLED(true), FAILED(true), UNSTABLE(true);
+  public enum State implements BasicBuildState {
+    QUEUED(SimpleState.WAITING),
+    LAUNCHING(SimpleState.RUNNING),
+    IN_PROGRESS(SimpleState.RUNNING),
+    SUCCEEDED(SimpleState.COMPLETE),
+    CANCELLED(SimpleState.COMPLETE),
+    FAILED(SimpleState.COMPLETE),
+    UNSTABLE(SimpleState.COMPLETE);
 
-    private final boolean completed;
+    private final SimpleState simpleState;
 
-    State(boolean completed) {
-      this.completed = completed;
+    State(BasicBuildState.SimpleState simpleState) {
+      this.simpleState = simpleState;
     }
 
+    @Override
+    public boolean isWaiting() {
+      return simpleState == SimpleState.WAITING;
+    }
+
+    @Override
+    public boolean isRunning() {
+      return simpleState == SimpleState.RUNNING;
+    }
+
+    @Override
     public boolean isComplete() {
-      return completed;
+      return simpleState == SimpleState.COMPLETE;
     }
   }
 

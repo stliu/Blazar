@@ -127,7 +127,7 @@ public class InterProjectBuildHandler extends AbstractInterProjectBuildVisitor {
     // Cancelling in-progress repository Builds will cause the cancellation of modules which will cancel the rest of the tree in InterProjectModuleBuildVisitor
     Set<InterProjectBuildMapping> mappings = interProjectBuildMappingService.getMappingsForInterProjectBuild(build);
     for (InterProjectBuildMapping mapping : mappings) {
-      if (!mapping.getState().isFinished()) {
+      if (!mapping.getState().isComplete()) {
         RepositoryBuild repositoryBuild = repositoryBuildService.get(mapping.getRepoBuildId().get()).get();
         repositoryBuildService.cancel(repositoryBuild);
       }

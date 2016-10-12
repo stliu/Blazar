@@ -20,21 +20,32 @@ public class InterProjectBuild {
   @StoredAsJson
   private final Optional<DependencyGraph> dependencyGraph;
 
-  public enum State {
-    QUEUED(false),
-    IN_PROGRESS(false),
-    CANCELLED(true),
-    FAILED(true),
-    SUCCEEDED(true);
+  public enum State implements BasicBuildState {
+    QUEUED(SimpleState.WAITING),
+    IN_PROGRESS(SimpleState.RUNNING),
+    CANCELLED(SimpleState.COMPLETE),
+    FAILED(SimpleState.COMPLETE),
+    SUCCEEDED(SimpleState.COMPLETE);
 
-    private final boolean completed;
+    private final SimpleState simpleState;
 
-    State(boolean completed) {
-      this.completed = completed;
+    State(SimpleState simpleState) {
+      this.simpleState = simpleState;
     }
 
-    public boolean isFinished() {
-      return this.completed;
+    @Override
+    public boolean isWaiting() {
+      return simpleState == SimpleState.WAITING;
+    }
+
+    @Override
+    public boolean isRunning() {
+      return simpleState == SimpleState.RUNNING;
+    }
+
+    @Override
+    public boolean isComplete() {
+      return simpleState == SimpleState.COMPLETE;
     }
   }
 

@@ -41,6 +41,15 @@ public class BranchService {
     return branchDao.getByRepositoryAndBranch(repositoryId, branch);
   }
 
+  public GitInfo getBranchWithModuleId(int moduleId) {
+    Optional<GitInfo> maybeBranch = branchDao.getFromModuleId(moduleId);
+    if (!maybeBranch.isPresent()) {
+      // A module can never exist without a branch
+      throw new NotFoundException(String.format("No branch found for module %d, does the module exist?", moduleId));
+    }
+    return maybeBranch.get();
+  }
+
   public void checkBranchExists(int branchId) {
     Optional<GitInfo> maybeBranch = get(branchId);
     if (!maybeBranch.isPresent()) {

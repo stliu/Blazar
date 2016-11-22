@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,37 @@ public class ModuleBuildService {
 
   public Optional<ModuleBuild> get(long id) {
     return moduleBuildDao.get(id);
+  }
+
+  /**
+   * @param moduleBuildId the id of the build you are trying to fetch
+   * @return ModuleBuild
+   * @throws NotFoundException if not found
+   */
+  public ModuleBuild getWithId(long moduleBuildId) {
+    Optional<ModuleBuild> maybeModuleBuild = get(moduleBuildId);
+    if (!maybeModuleBuild.isPresent()) {
+      throw new NotFoundException(String.format("Could not find moduleBuild with id %d", moduleBuildId));
+    }
+    return maybeModuleBuild.get();
+  }
+
+  public ModuleBuild getBuildWithError(long moduleBuildId) {
+    Optional<ModuleBuild> maybeBuild = get(moduleBuildId);
+    if (maybeBuild.isPresent()) {
+      return maybeBuild.get();
+    } else {
+      throw new NotFoundException("No build found with id: " + moduleBuildId);
+    }
+  }
+
+  public ModuleBuild getBuildWithExpectedState(long moduleBuildId, State expected) {
+    ModuleBuild build = getBuildWithError(moduleBuildId);
+    if (build.getState() == expected) {
+      return build;
+    } else {
+      throw new IllegalStateException(String.format("Build is in state %s, expected %s", build.getState(), expected));
+    }
   }
 
   public Set<ModuleBuild> getByRepositoryBuild(long repoBuildId) {

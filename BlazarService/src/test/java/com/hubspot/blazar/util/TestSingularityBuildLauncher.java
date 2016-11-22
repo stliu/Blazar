@@ -5,7 +5,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -58,7 +57,7 @@ public class TestSingularityBuildLauncher extends SingularityBuildLauncher {
 
   private void failBuild(ModuleBuild build) {
     LOG.info("Pretending to launch {} calling start", build);
-    ModuleBuild inProgress = moduleBuildResource.start(build.getId().get(), Optional.of(build.toString()));
+    ModuleBuild inProgress = moduleBuildResource.start(build.getId().get(), build.toString());
     LOG.info("Build {} now in progress, publishing failure", inProgress);
     ModuleBuild failure = moduleBuildResource.completeFailure(inProgress.getId().get());
     LOG.info("Build {} Failed", failure);
@@ -66,7 +65,7 @@ public class TestSingularityBuildLauncher extends SingularityBuildLauncher {
 
   private void passBuild(ModuleBuild build) {
     LOG.info("Pretending to launch {} calling start", build);
-    ModuleBuild inProgress = moduleBuildResource.start(build.getId().get(), Optional.of(build.toString()));
+    ModuleBuild inProgress = moduleBuildResource.start(build.getId().get(), build.toString());
     LOG.info("Build {} now in progress, publishing success", inProgress);
     ModuleBuild success = moduleBuildResource.completeSuccess(inProgress.getId().get());
     LOG.info("Build {} succeed", success);

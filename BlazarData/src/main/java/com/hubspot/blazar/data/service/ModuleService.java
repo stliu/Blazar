@@ -32,12 +32,45 @@ public class ModuleService {
     return moduleDao.get(moduleId);
   }
 
+  /**
+   * Throws NotFoundException if module does not exist
+   * @param moduleId id of module
+   * @return the module
+   */
+  public Module getWithId(int moduleId) {
+    Optional<Module> maybeModule = get(moduleId);
+    if(!maybeModule.isPresent()) {
+      throw new NotFoundException(String.format("Module with id %d not found", moduleId));
+    }
+    return maybeModule.get();
+  }
+
   public Set<Module> getByBranch(int branchId) {
     return moduleDao.getByBranch(branchId);
   }
 
+  /**
+   * Deprecated in favor of {@Link BranchService#getBranchByModuleId(moduleId)}
+   * @param moduleId the id of the module you want to have the branchId for
+   * @return the branchId of the branch this module belongs to
+   */
+  @Deprecated
   public int getBranchIdFromModuleId(int moduleId) {
     return moduleDao.getBranchIdFromModuleId(moduleId);
+  }
+
+  /**
+   *
+   * @return String module-coordinate for a given module
+   * @throws  NotFoundException if module does not exist
+   * A coordinate is a unique string identifying a module in the form `host-org-repo-branch-moduleName`
+   */
+  public String getModuleCoordinateById(int moduleId) {
+    Optional<String> maybeCoordinate = moduleDao.getModuleCoordinateById(moduleId);
+    if (!maybeCoordinate.isPresent()) {
+      throw new NotFoundException(String.format("No module with id %d found", moduleId));
+    }
+    return maybeCoordinate.get();
   }
 
   public void checkModuleExists(int moduleId) {

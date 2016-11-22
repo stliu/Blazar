@@ -25,6 +25,10 @@ public interface BranchDao {
   @SqlQuery("SELECT * FROM branches WHERE id = :id")
   Optional<GitInfo> get(@Bind("id") int id);
 
+  @SingleValueResult
+  @SqlQuery("SELECT branches.* FROM branches JOIN modules on (branches.id = modules.branchId) WHERE modules.id = :moduleId")
+  Optional<GitInfo> getFromModuleId(@Bind("moduleId") int moduleId);
+
   @SqlQuery("SELECT * FROM branches WHERE repositoryId = :repositoryId")
   Set<GitInfo> getByRepository(@Bind("repositoryId") int repositoryId);
 

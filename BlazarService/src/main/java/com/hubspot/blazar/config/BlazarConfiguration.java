@@ -39,6 +39,9 @@ public class BlazarConfiguration extends Configuration {
   @JsonProperty("database")
   private DataSourceFactory databaseConfiguration;
 
+  @JsonProperty("badBuildService")
+  private Optional<BadBuildServiceConfiguration> badBuildServiceConfiguration = Optional.absent();
+
   @Valid
   @NotNull
   @JsonProperty("ui")
@@ -98,6 +101,14 @@ public class BlazarConfiguration extends Configuration {
   public BlazarConfiguration setDatabaseConfiguration(DataSourceFactory databaseConfiguration) {
     this.databaseConfiguration = databaseConfiguration;
     return this;
+  }
+
+  public Optional<BadBuildServiceConfiguration> getBadBuildServiceConfiguration() {
+    return badBuildServiceConfiguration;
+  }
+
+  public void setBadBuildServiceConfiguration(BadBuildServiceConfiguration badBuildServiceConfiguration) {
+    this.badBuildServiceConfiguration = Optional.of(badBuildServiceConfiguration);
   }
 
   public UiConfiguration getUiConfiguration() {

@@ -39,8 +39,11 @@ import com.hubspot.blazar.data.BlazarDataModule;
 import com.hubspot.blazar.discovery.DiscoveryModule;
 import com.hubspot.blazar.exception.IllegalArgumentExceptionMapper;
 import com.hubspot.blazar.exception.IllegalStateExceptionMapper;
+import com.hubspot.blazar.externalservice.badbuilds.BadBuildClient;
+import com.hubspot.blazar.externalservice.badbuilds.BlazarConfigurationControlledBadBuildClient;
 import com.hubspot.blazar.listener.BuildVisitorModule;
 import com.hubspot.blazar.listener.SingularityTaskKiller;
+import com.hubspot.blazar.resources.BranchBuildResource;
 import com.hubspot.blazar.resources.BranchResource;
 import com.hubspot.blazar.resources.BranchStateResource;
 import com.hubspot.blazar.resources.BuildHistoryResource;
@@ -48,7 +51,6 @@ import com.hubspot.blazar.resources.GitHubWebhookResource;
 import com.hubspot.blazar.resources.InstantMessageResource;
 import com.hubspot.blazar.resources.InterProjectBuildResource;
 import com.hubspot.blazar.resources.ModuleBuildResource;
-import com.hubspot.blazar.resources.RepositoryBuildResource;
 import com.hubspot.blazar.resources.UiResource;
 import com.hubspot.blazar.resources.UserFeedbackResource;
 import com.hubspot.blazar.util.BlazarUrlHelper;
@@ -105,23 +107,18 @@ public class BlazarServiceModule extends DropwizardAwareModule<BlazarConfigurati
     binder.bind(BranchResource.class);
     binder.bind(BranchStateResource.class);
     binder.bind(ModuleBuildResource.class);
-    binder.bind(RepositoryBuildResource.class);
+    binder.bind(BranchBuildResource.class);
     binder.bind(BuildHistoryResource.class);
     binder.bind(InstantMessageResource.class);
     binder.bind(InterProjectBuildResource.class);
     binder.bind(UiResource.class);
-
-    if (getConfiguration().getSlackConfiguration().isPresent()) {
-      binder.bind(UserFeedbackResource.class);
-      binder.bind(SlackUtils.class);
-    }
+    binder.bind(UserFeedbackResource.class);
 
     // Only configure leader-based activities like processing events etc. if you are connected to zookeeper
     if (getConfiguration().getZooKeeperConfiguration().isPresent()) {
       binder.install(new BuildVisitorModule(getConfiguration()));
       binder.install(new BlazarQueueProcessorModule());
       binder.install(new BlazarZooKeeperModule());
-
 
       // Bind Singularity related watchers
       Multibinder.newSetBinder(binder, LeaderLatchListener.class).addBinding().to(SingularityBuildWatcher.class);
@@ -132,6 +129,13 @@ public class BlazarServiceModule extends DropwizardAwareModule<BlazarConfigurati
       binder.bind(SingularityTaskKiller.class);
     } else {
       LOG.info("Not enabling queue-processing or build event handlers because no zookeeper configuration is specified. We need to elect a leader to process events.");
+    }
+
+    // Only register badBuild resource & service if configuration is available
+    if (getConfiguration().getBadBuildServiceConfiguration().isPresent()) {
+      binder.bind(BadBuildClient.class).to(BlazarConfigurationControlledBadBuildClient.class);
+    } else {
+      binder.bind(BadBuildClient.class).to(BadBuildClient.DisabledBadBuildClient.class);
     }
 
     // Set up property filtering
@@ -148,6 +152,7 @@ public class BlazarServiceModule extends DropwizardAwareModule<BlazarConfigurati
     binder.bind(SingularityBuildLauncher.class);
     binder.bind(BlazarUrlHelper.class);
     binder.bind(CCTrayProjectFactory.class);
+    binder.bind(SlackUtils.class);
 
     // Bind and configure Singularity client
     SingularityConfiguration singularityConfiguration = getConfiguration().getSingularityConfiguration();
@@ -212,7 +217,6 @@ public class BlazarServiceModule extends DropwizardAwareModule<BlazarConfigurati
 
     return new NingAsyncHttpClient(config);
   }
-
 
   @Provides
   @Singleton

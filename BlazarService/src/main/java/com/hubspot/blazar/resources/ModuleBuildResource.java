@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -25,6 +26,7 @@ import com.hubspot.blazar.base.LogChunk;
 import com.hubspot.blazar.base.ModuleBuild;
 import com.hubspot.blazar.base.ModuleBuild.State;
 import com.hubspot.blazar.data.service.ModuleBuildService;
+import com.hubspot.blazar.externalservice.badbuilds.BadBuildClient;
 import com.hubspot.horizon.AsyncHttpClient;
 import com.hubspot.horizon.HttpRequest;
 import com.hubspot.horizon.HttpResponse;
@@ -42,41 +44,44 @@ public class ModuleBuildResource {
 
   private final ModuleBuildService moduleBuildService;
   private final SingularityClient singularityClient;
+  private BadBuildClient badBuildClient;
   private final AsyncHttpClient asyncHttpClient;
 
   @Inject
   public ModuleBuildResource(ModuleBuildService moduleBuildService,
                              SingularityClient singularityClient,
+                             BadBuildClient badBuildClient,
                              AsyncHttpClient asyncHttpClient) {
     this.moduleBuildService = moduleBuildService;
     this.singularityClient = singularityClient;
+    this.badBuildClient = badBuildClient;
     this.asyncHttpClient = asyncHttpClient;
   }
 
   @GET
-  @Path("/{id}")
-  public Optional<ModuleBuild> get(@PathParam("id") long moduleBuildId) {
+  @Path("/{buildId}")
+  public Optional<ModuleBuild> get(@PathParam("buildId") long moduleBuildId) {
     return moduleBuildService.get(moduleBuildId);
   }
 
   @PUT
-  @Path("/{id}/start")
-  public ModuleBuild start(@PathParam("id") long moduleBuildId, @QueryParam("taskId") Optional<String> taskId) {
-    ModuleBuild build = getBuildWithExpectedState(moduleBuildId, State.LAUNCHING);
+  @Path("/{buildId}/start")
+  public ModuleBuild start(@PathParam("buildId") long moduleBuildId, @QueryParam("taskId") String taskId) {
+    ModuleBuild build = moduleBuildService.getBuildWithExpectedState(moduleBuildId, State.LAUNCHING);
 
-    if (!taskId.isPresent()) {
+    if (taskId.isEmpty()) {
       throw new IllegalArgumentException("Task ID is required");
     }
 
-    ModuleBuild inProgress = build.toBuilder().setState(State.IN_PROGRESS).setTaskId(Optional.of(taskId.get())).build();
+    ModuleBuild inProgress = build.toBuilder().setState(State.IN_PROGRESS).setTaskId(Optional.of(taskId)).build();
     moduleBuildService.update(inProgress);
     return inProgress;
   }
 
   @PUT
-  @Path("/{id}/success")
-  public ModuleBuild completeSuccess(@PathParam("id") long moduleBuildId) {
-    ModuleBuild build = getBuildWithExpectedState(moduleBuildId, State.IN_PROGRESS);
+  @Path("/{moduleBuildId}/success")
+  public ModuleBuild completeSuccess(@PathParam("moduleBuildId") long moduleBuildId) {
+    ModuleBuild build = moduleBuildService.getBuildWithExpectedState(moduleBuildId, State.IN_PROGRESS);
 
     ModuleBuild succeeded = build.toBuilder().setState(State.SUCCEEDED).setEndTimestamp(Optional.of(System.currentTimeMillis())).build();
     moduleBuildService.update(succeeded);
@@ -84,9 +89,9 @@ public class ModuleBuildResource {
   }
 
   @PUT
-  @Path("/{id}/failure")
-  public ModuleBuild completeFailure(@PathParam("id") long moduleBuildId) {
-    ModuleBuild build = getBuildWithExpectedState(moduleBuildId, State.IN_PROGRESS);
+  @Path("/{moduleBuildId}/failure")
+  public ModuleBuild completeFailure(@PathParam("moduleBuildId") long moduleBuildId) {
+    ModuleBuild build = moduleBuildService.getBuildWithExpectedState(moduleBuildId, State.IN_PROGRESS);
 
     ModuleBuild failed = build.toBuilder().setState(State.FAILED).setEndTimestamp(Optional.of(System.currentTimeMillis())).build();
     moduleBuildService.update(failed);
@@ -94,11 +99,11 @@ public class ModuleBuildResource {
   }
 
   @GET
-  @Path("/{id}/log")
-  public LogChunk getLog(@PathParam("id") long moduleBuildId,
+  @Path("/{moduleBuildId}/log")
+  public LogChunk getLog(@PathParam("moduleBuildId") long moduleBuildId,
                          @QueryParam("offset") @DefaultValue("0") long offset,
                          @QueryParam("length") @DefaultValue("65536") long length) throws Exception {
-    ModuleBuild build = getBuildWithError(moduleBuildId);
+    ModuleBuild build = moduleBuildService.getBuildWithError(moduleBuildId);
 
     Optional<String> taskId = build.getTaskId();
     if (!taskId.isPresent()) {
@@ -126,9 +131,9 @@ public class ModuleBuildResource {
   }
 
   @GET
-  @Path("/{id}/log/size")
-  public Object getLogSize(@PathParam("id") long moduleBuildId) {
-    ModuleBuild build = getBuildWithError(moduleBuildId);
+  @Path("/{moduleBuildId}/log/size")
+  public Object getLogSize(@PathParam("moduleBuildId") long moduleBuildId) {
+    ModuleBuild build = moduleBuildService.getBuildWithError(moduleBuildId);
 
     Optional<String> taskId = build.getTaskId();
     if (!taskId.isPresent()) {
@@ -153,6 +158,19 @@ public class ModuleBuildResource {
         return size;
       }
     };
+  }
+
+  @POST
+  @Path("{moduleBuildId}/mark-as-bad")
+  public void markBuildAsBad(@PathParam("moduleBuildId") long moduleBuildId) {
+
+    badBuildClient.markBuildAsBad(moduleBuildId);
+  }
+
+  @POST
+  @Path("{moduleBuildId}/un-mark-as-bad")
+  public void unMarkBuildAsBad(@PathParam("moduleBuildId") long moduleBuildId) {
+    badBuildClient.unMarkBuildAsBad(moduleBuildId);
   }
 
   private SingularityS3Log findS3ServiceLog(String taskId) {
@@ -201,23 +219,5 @@ public class ModuleBuildResource {
 
     SimplifiedTaskState taskState = SingularityTaskHistoryUpdate.getCurrentState(taskHistory.get().getTaskUpdates());
     return taskState == SimplifiedTaskState.DONE;
-  }
-
-  private ModuleBuild getBuildWithError(long moduleBuildId) {
-    Optional<ModuleBuild> maybeBuild = get(moduleBuildId);
-    if (maybeBuild.isPresent()) {
-      return maybeBuild.get();
-    } else {
-      throw new NotFoundException("No build found with id: " + moduleBuildId);
-    }
-  }
-
-  private ModuleBuild getBuildWithExpectedState(long moduleBuildId, State expected) {
-    ModuleBuild build = getBuildWithError(moduleBuildId);
-    if (build.getState() == expected) {
-      return build;
-    } else {
-      throw new IllegalStateException(String.format("Build is in state %s, expected %s", build.getState(), expected));
-    }
   }
 }

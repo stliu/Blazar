@@ -56,7 +56,7 @@ public class BlazarConfigurationControlledBadBuildClient implements BadBuildClie
     ModuleBuild moduleBuild = moduleBuildService.getWithId(moduleBuildId);
     String buildName = moduleService.getModuleCoordinateById(moduleBuild.getModuleId());
     HttpRequest.Method method = HttpRequest.Method.PUT;
-    makeRequest(markBuildAsBadEndpoint, method, buildName, moduleBuild.getBuildNumber());
+    httpClient.execute(makeRequest(markBuildAsBadEndpoint, method, buildName, moduleBuild.getBuildNumber()));
   }
 
   @Override
@@ -64,15 +64,15 @@ public class BlazarConfigurationControlledBadBuildClient implements BadBuildClie
     ModuleBuild moduleBuild = moduleBuildService.getWithId(moduleBuildId);
     String buildName = moduleService.getModuleCoordinateById(moduleBuild.getModuleId());
     HttpRequest.Method method = HttpRequest.Method.DELETE;
-    makeRequest(unMarkBuildAsBadEndpoint, method, buildName, moduleBuild.getBuildNumber());
+    httpClient.execute(makeRequest(unMarkBuildAsBadEndpoint, method, buildName, moduleBuild.getBuildNumber()));
   }
 
-  private void makeRequest(String endpoint, HttpRequest.Method method, String buildName, int buildNumber) {
-    HttpRequest httpRequest = HttpRequest.newBuilder()
+  HttpRequest makeRequest(String endpoint, HttpRequest.Method method, String buildName, int buildNumber) {
+    return HttpRequest.newBuilder()
         .setMethod(method)
         .setUrl(endpoint)
         .setBody(new BadBuild(buildName, buildNumber))
         .build();
-    httpClient.execute(httpRequest);
+
   }
 }

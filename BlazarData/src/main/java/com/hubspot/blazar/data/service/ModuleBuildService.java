@@ -56,17 +56,8 @@ public class ModuleBuildService {
     return maybeModuleBuild.get();
   }
 
-  public ModuleBuild getBuildWithError(long moduleBuildId) {
-    Optional<ModuleBuild> maybeBuild = get(moduleBuildId);
-    if (maybeBuild.isPresent()) {
-      return maybeBuild.get();
-    } else {
-      throw new NotFoundException("No build found with id: " + moduleBuildId);
-    }
-  }
-
   public ModuleBuild getBuildWithExpectedState(long moduleBuildId, State expected) {
-    ModuleBuild build = getBuildWithError(moduleBuildId);
+    ModuleBuild build = getWithId(moduleBuildId);
     if (build.getState() == expected) {
       return build;
     } else {

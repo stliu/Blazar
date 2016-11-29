@@ -103,7 +103,7 @@ public class ModuleBuildResource {
   public LogChunk getLog(@PathParam("moduleBuildId") long moduleBuildId,
                          @QueryParam("offset") @DefaultValue("0") long offset,
                          @QueryParam("length") @DefaultValue("65536") long length) throws Exception {
-    ModuleBuild build = moduleBuildService.getBuildWithError(moduleBuildId);
+    ModuleBuild build = moduleBuildService.getWithId(moduleBuildId);
 
     Optional<String> taskId = build.getTaskId();
     if (!taskId.isPresent()) {
@@ -133,7 +133,7 @@ public class ModuleBuildResource {
   @GET
   @Path("/{moduleBuildId}/log/size")
   public Object getLogSize(@PathParam("moduleBuildId") long moduleBuildId) {
-    ModuleBuild build = moduleBuildService.getBuildWithError(moduleBuildId);
+    ModuleBuild build = moduleBuildService.getWithId(moduleBuildId);
 
     Optional<String> taskId = build.getTaskId();
     if (!taskId.isPresent()) {

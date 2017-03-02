@@ -90,7 +90,7 @@ public class BuildEventDispatcher {
       }
     } catch (NonRetryableBuildException e) {
       LOG.warn("Failing build {}", build.getId().get(), e);
-      moduleBuildService.fail(build);
+      moduleBuildService.fail(build, e.getMessage());
     }
   }
 

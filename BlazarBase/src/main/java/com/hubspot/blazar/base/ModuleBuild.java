@@ -57,6 +57,7 @@ public class ModuleBuild {
   private final Optional<BuildConfig> buildConfig;
   @StoredAsJson
   private final Optional<BuildConfig> resolvedConfig;
+  private Optional<String> terminalStateMessage;
 
   @JsonCreator
   public ModuleBuild(@JsonProperty("id") Optional<Long> id,
@@ -68,7 +69,8 @@ public class ModuleBuild {
                      @JsonProperty("endTimestamp") Optional<Long> endTimestamp,
                      @JsonProperty("taskId") Optional<String> taskId,
                      @JsonProperty("buildConfig") Optional<BuildConfig> buildConfig,
-                     @JsonProperty("resolvedConfig") Optional<BuildConfig> resolvedConfig) {
+                     @JsonProperty("resolvedConfig") Optional<BuildConfig> resolvedConfig,
+                     @JsonProperty("terminalStateMessage") Optional<String> terminalStateMessage) {
     this.id = id;
     this.repoBuildId = repoBuildId;
     this.moduleId = moduleId;
@@ -79,6 +81,7 @@ public class ModuleBuild {
     this.taskId = taskId;
     this.buildConfig = buildConfig;
     this.resolvedConfig = resolvedConfig;
+    this.terminalStateMessage = terminalStateMessage;
   }
 
   public static ModuleBuild queuedBuild(RepositoryBuild repositoryBuild, Module module, int buildNumber) {
@@ -134,6 +137,10 @@ public class ModuleBuild {
     return resolvedConfig;
   }
 
+  public Optional<String> getTerminalStateMessage() {
+    return terminalStateMessage;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -141,6 +148,7 @@ public class ModuleBuild {
         .add("moduleId", moduleId)
         .add("repoBuildId", repoBuildId)
         .add("state", state)
+        .add("terminalStateMessage", terminalStateMessage)
         .toString();
   }
 
@@ -170,7 +178,8 @@ public class ModuleBuild {
         .setEndTimestamp(endTimestamp)
         .setTaskId(taskId)
         .setBuildConfig(buildConfig)
-        .setResolvedConfig(resolvedConfig);
+        .setResolvedConfig(resolvedConfig)
+        .setTerminalStateMessage(terminalStateMessage);
   }
 
 
@@ -190,12 +199,57 @@ public class ModuleBuild {
     private Optional<String> taskId = Optional.absent();
     private Optional<BuildConfig> buildConfig = Optional.absent();
     private Optional<BuildConfig> resolvedConfig = Optional.absent();
+    private Optional<String> terminalStateMessage = Optional.absent();
 
     public Builder(long repoBuildId, int moduleId, int buildNumber, State intialState) {
       this.repoBuildId = repoBuildId;
       this.moduleId = moduleId;
       this.buildNumber = buildNumber;
       this.state = intialState;
+    }
+
+    public Optional<Long> getId() {
+      return id;
+    }
+
+    public long getRepoBuildId() {
+      return repoBuildId;
+    }
+
+    public int getModuleId() {
+      return moduleId;
+    }
+
+    public int getBuildNumber() {
+      return buildNumber;
+    }
+
+    public State getState() {
+      return state;
+    }
+
+    public Optional<Long> getStartTimestamp() {
+      return startTimestamp;
+    }
+
+    public Optional<Long> getEndTimestamp() {
+      return endTimestamp;
+    }
+
+    public Optional<String> getTaskId() {
+      return taskId;
+    }
+
+    public Optional<BuildConfig> getBuildConfig() {
+      return buildConfig;
+    }
+
+    public Optional<BuildConfig> getResolvedConfig() {
+      return resolvedConfig;
+    }
+
+    public Optional<String> getTerminalStateMessage() {
+      return terminalStateMessage;
     }
 
     public Builder setId(Optional<Long> id) {
@@ -248,8 +302,13 @@ public class ModuleBuild {
       return this;
     }
 
+    public Builder setTerminalStateMessage(Optional<String> terminalStateMessage) {
+      this.terminalStateMessage = terminalStateMessage;
+      return this;
+    }
+
     public ModuleBuild build() {
-      return new ModuleBuild(id, repoBuildId, moduleId, buildNumber, state, startTimestamp, endTimestamp, taskId, buildConfig, resolvedConfig);
+      return new ModuleBuild(id, repoBuildId, moduleId, buildNumber, state, startTimestamp, endTimestamp, taskId, buildConfig, resolvedConfig, terminalStateMessage);
     }
   }
 }
